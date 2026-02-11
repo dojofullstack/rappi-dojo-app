@@ -138,8 +138,8 @@ app.get('/api/pedidos', async (req, res) => {
   }
 });
 
-// Manejar rutas no encontradas
-app.use('*', (req, res) => {
+// Manejar rutas no encontradas (debe ser sin asterisco para Netlify Functions)
+app.use((req, res) => {
   res.status(404).json({ 
     status: false, 
     error: 'Endpoint no encontrado' 

@@ -133,7 +133,7 @@ git push origin main
 
 3. **Agrega la variable de entorno**
    - En el dashboard de Netlify: `Site settings` → `Environment variables`
-   - Agrega: `DATABASE_URL` con el valor completo de tu conexión a Neon
+   - Agrega: `NETLIFY_DATABASE_URL` con el valor completo de tu conexión a Neon
    - **IMPORTANTE:** No incluyas esta variable en el código, solo en Netlify
 
 4. **Deploy automático**
@@ -150,7 +150,7 @@ netlify login
 netlify init
 
 # Agregar variable de entorno
-netlify env:set DATABASE_URL "postgresql://neondb_owner:..."
+netlify env:set NETLIFY_DATABASE_URL "postgresql://neondb_owner:..."
 
 # Deploy manual
 netlify deploy --prod
@@ -178,7 +178,7 @@ netlify deploy --prod
 ## 🐛 Troubleshooting
 
 ### Error: "Cannot connect to database"
-- Verifica que la variable `DATABASE_URL` esté configurada en Netlify
+- Verifica que la variable `NETLIFY_DATABASE_URL` esté configurada en Netlify
 - Verifica que la IP de Netlify esté permitida en Neon (por defecto está permitido)
 
 ### Error: "Module not found"

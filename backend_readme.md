@@ -23,7 +23,7 @@ npm install drizzle-orm @neondatabase/serverless serverless-http express
 # Herramientas de desarrollo
 npm install -D drizzle-kit dotenv
 
-DATABASE_URL='postgresql://neondb_owner:npg_FZvdPU3j6rTi@ep-noisy-paper-ai3t4009-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require'
+NETLIFY_DATABASE_URL='postgresql://neondb_owner:npg_FZvdPU3j6rTi@ep-noisy-paper-ai3t4009-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require'
 
 
 import { pgTable, serial, text, timestamp, integer } from 'drizzle-orm/pg-core';
