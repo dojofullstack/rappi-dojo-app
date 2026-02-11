@@ -6,6 +6,9 @@
   node_bundler = "esbuild"
   external_node_modules = ["@neondatabase/serverless"]
 
+[[functions]]
+  directory = "netlify/functions"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/api/:splat"
