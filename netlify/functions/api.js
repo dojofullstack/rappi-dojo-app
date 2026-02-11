@@ -8,6 +8,66 @@ app.use(express.json());
 // Crear cliente SQL directo
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
+// Endpoint temporal para setup de base de datos
+app.post('/api/setup-db', async (req, res) => {
+  try {
+    console.log('Iniciando setup de base de datos...');
+    
+    // Crear tabla pedidos
+    await sql`
+      CREATE TABLE IF NOT EXISTS pedidos (
+        id SERIAL PRIMARY KEY,
+        nombre TEXT NOT NULL,
+        email TEXT NOT NULL,
+        telefono TEXT,
+        direccion TEXT NOT NULL,
+        apartamento TEXT,
+        ciudad TEXT NOT NULL,
+        estado TEXT NOT NULL,
+        codigo_postal TEXT NOT NULL,
+        metodo_pago TEXT NOT NULL,
+        metodo_envio TEXT NOT NULL,
+        subtotal NUMERIC(10, 2) NOT NULL,
+        costo_envio NUMERIC(10, 2) NOT NULL,
+        impuesto NUMERIC(10, 2) NOT NULL,
+        total NUMERIC(10, 2) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
+    
+    // Crear tabla pedido_items
+    await sql`
+      CREATE TABLE IF NOT EXISTS pedido_items (
+        id SERIAL PRIMARY KEY,
+        pedido_id INTEGER NOT NULL REFERENCES pedidos(id),
+        nombre_producto TEXT NOT NULL,
+        precio NUMERIC(10, 2) NOT NULL,
+        cantidad INTEGER DEFAULT 1 NOT NULL
+      )
+    `;
+    
+    // Verificar tablas creadas
+    const tablas = await sql`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+    `;
+    
+    res.json({
+      status: true,
+      mensaje: 'Tablas creadas exitosamente',
+      tablas: tablas.map(t => t.table_name)
+    });
+    
+  } catch (error) {
+    console.error('Error al crear tablas:', error);
+    res.status(500).json({
+      status: false,
+      error: error.message
+    });
+  }
+});
+
 // Endpoint para crear un nuevo pedido
 app.post('/api/pedidos', async (req, res) => {
   // Log para debugging
