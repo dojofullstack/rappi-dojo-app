@@ -1,0 +1,378 @@
+/* Contenedor del formulario */
+.checkout-form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.checkout-form {
+    background: white;
+    border-radius: 8px;
+    padding: 25px;
+}
+
+.checkout-form h2 {
+    font-size: 1.5rem;
+    color: #333;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.checkout-form h3 {
+    font-size: 1.2rem;
+    color: #333;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.checkout-form h4 {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+/* Campos de formulario */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 6px;
+}
+
+.input-field {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Filas de formulario */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+}
+
+.form-row .form-group:nth-child(2) {
+    grid-column: 1;
+}
+
+.form-row .form-group:nth-child(3) {
+    grid-column: 1;
+}
+
+/* Para direcciones con 2 columnas */
+.form-row:first-of-type {
+    grid-template-columns: 1fr 1fr;
+}
+
+/* Para ciudad, estado y código postal */
+.form-row:has(.form-group:nth-child(3)) {
+    grid-template-columns: 1fr 1fr 150px;
+}
+
+/* Agregar más información */
+.form-add-more {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #667eea;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 15px;
+    padding: 10px 0;
+    font-size: 0.95rem;
+}
+
+.form-add-more span {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.form-add-more:hover {
+    color: #764ba2;
+}
+
+/* ===== MÉTODOS DE ENVÍO ===== */
+.shipping-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.shipping-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.shipping-option input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #667eea;
+    flex-shrink: 0;
+}
+
+.shipping-option.active {
+    border-color: #667eea;
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
+.shipping-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.shipping-name {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.shipping-time {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.shipping-price {
+    font-weight: 700;
+    color: #667eea;
+    font-size: 1rem;
+    min-width: 80px;
+    text-align: right;
+}
+
+/* ===== MÉTODOS DE PAGO ===== */
+.payment-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.payment-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.payment-option input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #667eea;
+    flex-shrink: 0;
+}
+
+.payment-option.active {
+    border-color: #667eea;
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
+.payment-name {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+    flex: 1;
+}
+
+/* Logos de tarjetas */
+.card-logos {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.logo {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: white;
+}
+
+.logo.visa {
+    background: linear-gradient(135deg, #1a1f71 0%, #003da5 100%);
+}
+
+.logo.mastercard {
+    background: linear-gradient(135deg, #eb001b 0%, #f79e1b 100%);
+}
+
+.logo.discover {
+    background: linear-gradient(135deg, #ff6000 0%, #fdb813 100%);
+}
+
+.logo.amex {
+    background: linear-gradient(135deg, #006fcf 0%, #00a3e0 100%);
+}
+
+/* Logo PayPal */
+.paypal-logo {
+    color: #003087;
+    font-weight: 700;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+/* Detalles de tarjeta */
+.card-details {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border: 1px solid #e0e0e0;
+}
+
+.card-details h4 {
+    margin-top: 0;
+}
+
+.card-details .form-row {
+    grid-template-columns: 1fr 1fr;
+}
+
+/* Botón Completar Pago */
+.btn-completar-pago {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 30px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-completar-pago:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}
+
+.btn-completar-pago:active {
+    transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .checkout-form {
+        padding: 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row:first-of-type {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row:has(.form-group:nth-child(3)) {
+        grid-template-columns: 1fr;
+    }
+
+    .shipping-option,
+    .payment-option {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .shipping-price,
+    .paypal-logo {
+        align-self: flex-end;
+        margin-top: 8px;
+    }
+
+    .card-logos {
+        justify-content: flex-start;
+    }
+
+    .card-details .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .checkout-form {
+        padding: 15px;
+    }
+
+    .checkout-form h2 {
+        font-size: 1.2rem;
+    }
+
+    .checkout-form h3 {
+        font-size: 1rem;
+    }
+
+    .input-field {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+
+    .shipping-option,
+    .payment-option {
+        padding: 12px;
+    }
+
+    .shipping-name,
+    .payment-name {
+        font-size: 0.85rem;
+    }
+
+    .shipping-time {
+        font-size: 0.75rem;
+    }
+
+    .btn-completar-pago {
+        padding: 14px;
+        font-size: 0.95rem;
+    }
+
+    .card-logos {
+        gap: 5px;
+    }
+
+    .logo {
+        padding: 3px 6px;
+        font-size: 0.65rem;
+    }
+}
