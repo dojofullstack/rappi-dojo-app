@@ -168,7 +168,41 @@ app.post('/pedidos', async (req, res) => {
   }
 });
 
-// Endpoint opcional para obtener un pedido por ID
+// Endpoint opcional para listar todos los pedidos (debe ir ANTES del endpoint con :id)
+app.get('/pedidos', async (req, res) => {
+  try {
+    const pedidos = await sql`
+      SELECT 
+        p.*,
+        json_agg(
+          json_build_object(
+            'id', pi.id,
+            'nombre_producto', pi.nombre_producto,
+            'precio', pi.precio,
+            'cantidad', pi.cantidad
+          )
+        ) as items
+      FROM pedidos p
+      LEFT JOIN pedido_items pi ON p.id = pi.pedido_id
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+    `;
+
+    res.json({ 
+      status: true, 
+      pedidos: pedidos 
+    });
+
+  } catch (error) {
+    console.error('Error al listar pedidos:', error);
+    res.status(500).json({ 
+      status: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Endpoint opcional para obtener un pedido por ID (debe ir DESPUÉS del endpoint general)
 app.get('/pedidos/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -197,40 +231,6 @@ app.get('/pedidos/:id', async (req, res) => {
 
   } catch (error) {
     console.error('Error al obtener pedido:', error);
-    res.status(500).json({ 
-      status: false, 
-      error: error.message 
-    });
-  }
-});
-
-// Endpoint opcional para listar todos los pedidos
-app.get('/pedidos', async (req, res) => {
-  try {
-    const pedidos = await sql`
-      SELECT 
-        p.*,
-        json_agg(
-          json_build_object(
-            'id', pi.id,
-            'nombre_producto', pi.nombre_producto,
-            'precio', pi.precio,
-            'cantidad', pi.cantidad
-          )
-        ) as items
-      FROM pedidos p
-      LEFT JOIN pedido_items pi ON p.id = pi.pedido_id
-      GROUP BY p.id
-      ORDER BY p.created_at DESC
-    `;
-
-    res.json({ 
-      status: true, 
-      pedidos: pedidos 
-    });
-
-  } catch (error) {
-    console.error('Error al listar pedidos:', error);
     res.status(500).json({ 
       status: false, 
       error: error.message 
