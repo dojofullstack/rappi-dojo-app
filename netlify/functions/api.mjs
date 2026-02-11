@@ -7,9 +7,6 @@ import { eq, desc } from 'drizzle-orm';
 const app = express();
 app.use(express.json());
 
-const app = express();
-app.use(express.json());
-
 // Endpoint temporal para setup de base de datos
 app.post('/api/setup-db', async (req, res) => {
   try {
