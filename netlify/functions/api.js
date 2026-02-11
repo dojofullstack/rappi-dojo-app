@@ -8,6 +8,9 @@ app.use(express.json());
 
 // Endpoint para crear un nuevo pedido
 app.post('/api/pedidos', async (req, res) => {
+  // Log para debugging
+  console.log('POST /api/pedidos - Body recibido:', JSON.stringify(req.body, null, 2));
+  
   try {
     const { 
       datosCliente, 
@@ -79,16 +82,8 @@ app.post('/api/pedidos', async (req, res) => {
 
   } catch (error) {
     console.error('Error al crear pedido:', error);
-    console.error('Datos recibidos:', JSON.stringify({
-      datosCliente,
-      metodoPago,
-      metodoEnvio,
-      subtotal,
-      costoEnvio,
-      impuesto,
-      total,
-      carritoLength: carrito?.length
-    }));
+    console.error('Stack trace:', error.stack);
+    console.error('Datos recibidos:', JSON.stringify(req.body, null, 2));
     res.status(500).json({ 
       status: false, 
       error: error.message || 'Error al procesar el pedido' 
