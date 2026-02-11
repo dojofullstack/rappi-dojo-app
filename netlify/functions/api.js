@@ -9,7 +9,7 @@ app.use(express.json());
 const sql = neon(process.env.NETLIFY_DATABASE_URL);
 
 // Endpoint temporal para setup de base de datos
-app.post('/setup-db', async (req, res) => {
+app.post('/api/setup-db', async (req, res) => {
   try {
     console.log('Iniciando setup de base de datos...');
     
@@ -69,7 +69,7 @@ app.post('/setup-db', async (req, res) => {
 });
 
 // Endpoint para crear un nuevo pedido
-app.post('/pedidos', async (req, res) => {
+app.post('/api/pedidos', async (req, res) => {
   // Log para debugging
   console.log('POST /api/pedidos - Body recibido:', JSON.stringify(req.body, null, 2));
   
@@ -169,7 +169,7 @@ app.post('/pedidos', async (req, res) => {
 });
 
 // Endpoint opcional para listar todos los pedidos (debe ir ANTES del endpoint con :id)
-app.get('/pedidos', async (req, res) => {
+app.get('/api/pedidos', async (req, res) => {
   try {
     const pedidos = await sql`
       SELECT 
@@ -203,7 +203,7 @@ app.get('/pedidos', async (req, res) => {
 });
 
 // Endpoint opcional para obtener un pedido por ID (debe ir DESPUÉS del endpoint general)
-app.get('/pedidos/:id', async (req, res) => {
+app.get('/api/pedidos/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const pedidoId = parseInt(id);
