@@ -7,66 +7,6 @@ import { eq, desc } from 'drizzle-orm';
 const app = express();
 app.use(express.json());
 
-// Endpoint temporal para setup de base de datos
-app.post('/api/setup-db', async (req, res) => {
-  try {
-    console.log('Iniciando setup de base de datos...');
-    
-    // Crear tabla pedidos
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS pedidos (
-        id SERIAL PRIMARY KEY,
-        nombre TEXT NOT NULL,
-        email TEXT NOT NULL,
-        telefono TEXT,
-        direccion TEXT NOT NULL,
-        apartamento TEXT,
-        ciudad TEXT NOT NULL,
-        estado TEXT NOT NULL,
-        codigo_postal TEXT NOT NULL,
-        metodo_pago TEXT NOT NULL,
-        metodo_envio TEXT NOT NULL,
-        subtotal NUMERIC(10, 2) NOT NULL,
-        costo_envio NUMERIC(10, 2) NOT NULL,
-        impuesto NUMERIC(10, 2) NOT NULL,
-        total NUMERIC(10, 2) NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-    
-    // Crear tabla pedido_items
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS pedido_items (
-        id SERIAL PRIMARY KEY,
-        pedido_id INTEGER NOT NULL REFERENCES pedidos(id),
-        nombre_producto TEXT NOT NULL,
-        precio NUMERIC(10, 2) NOT NULL,
-        cantidad INTEGER DEFAULT 1 NOT NULL
-      )
-    `);
-    
-    // Verificar tablas creadas
-    const tablas = await db.execute(`
-      SELECT table_name 
-      FROM information_schema.tables 
-      WHERE table_schema = 'public'
-    `);
-    
-    res.json({
-      status: true,
-      mensaje: 'Tablas creadas exitosamente',
-      tablas: tablas.rows.map(t => t.table_name)
-    });
-    
-  } catch (error) {
-    console.error('Error al crear tablas:', error);
-    res.status(500).json({
-      status: false,
-      error: error.message
-    });
-  }
-});
-
 // Endpoint para crear un nuevo pedido
 app.post('/api/pedidos', async (req, res) => {
   // Log para debugging
@@ -160,16 +100,6 @@ app.post('/api/pedidos', async (req, res) => {
 // Endpoint opcional para listar todos los pedidos (debe ir ANTES del endpoint con :id)
 app.get('/api/pedidos', async (req, res) => {
   try {
-    const pedidos = await sql`
-      SELECT 
-        p.*,
-        json_agg(
-          json_build_object(
-            'id', pi.id,
-            'nombre_producto', pi.nombre_producto,
-            'precio', pi.precio,
-            'cantidad', pi.cantidad
-          )
     // Obtener todos los pedidos con sus items usando Drizzle ORM
     const todosPedidos = await db.query.pedidos.findMany({
       with: {
@@ -216,6 +146,16 @@ app.get('/api/pedidos/:id', async (req, res) => {
     res.json({ 
       status: true, 
       pedido: pedido
+    });
+
+  } catch (error) {
+    console.error('Error al obtener pedido:', error);
+    res.status(500).json({ 
+      status: false, 
+      error: error.message 
+    });
+  }
+});
 
 // Manejar rutas no encontradas
 app.use((req, res) => {
