@@ -36,30 +36,36 @@ app.post('/api/pedidos', async (req, res) => {
       });
     }
 
+    // Convertir valores numéricos a formato decimal correcto
+    const formatearDecimal = (valor) => {
+      const num = parseFloat(valor) || 0;
+      return num.toFixed(2);
+    };
+
     // Paso 1: Insertar el pedido principal
     const [nuevoPedido] = await db.insert(pedidos).values({
       nombre: datosCliente.nombre,
       email: datosCliente.email,
-      telefono: datosCliente.telefono || '',
+      telefono: datosCliente.telefono || null,
       direccion: datosCliente.direccion,
-      apartamento: datosCliente.apartamento || '',
+      apartamento: datosCliente.apartamento || null,
       ciudad: datosCliente.ciudad,
       estado: datosCliente.estado,
       codigoPostal: datosCliente.codigoPostal,
       metodoPago: metodoPago,
       metodoEnvio: metodoEnvio,
-      subtotal: subtotal.toString(),
-      costoEnvio: costoEnvio.toString(),
-      impuesto: impuesto.toString(),
-      total: total.toString(),
+      subtotal: formatearDecimal(subtotal),
+      costoEnvio: formatearDecimal(costoEnvio),
+      impuesto: formatearDecimal(impuesto),
+      total: formatearDecimal(total),
     }).returning();
 
     // Paso 2: Insertar los items del carrito
     const itemsParaInsertar = carrito.map(item => ({
       pedidoId: nuevoPedido.id,
       nombreProducto: item.name || item.title || 'Producto sin nombre',
-      precio: (item.price || 0).toString(),
-      cantidad: item.cantidad || item.quantity || 1,
+      precio: formatearDecimal(item.price || 0),
+      cantidad: parseInt(item.cantidad || item.quantity || 1),
     }));
 
     await db.insert(pedidoItems).values(itemsParaInsertar);
@@ -73,6 +79,16 @@ app.post('/api/pedidos', async (req, res) => {
 
   } catch (error) {
     console.error('Error al crear pedido:', error);
+    console.error('Datos recibidos:', JSON.stringify({
+      datosCliente,
+      metodoPago,
+      metodoEnvio,
+      subtotal,
+      costoEnvio,
+      impuesto,
+      total,
+      carritoLength: carrito?.length
+    }));
     res.status(500).json({ 
       status: false, 
       error: error.message || 'Error al procesar el pedido' 
