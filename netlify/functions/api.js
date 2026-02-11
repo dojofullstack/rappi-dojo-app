@@ -47,49 +47,45 @@ app.post('/api/pedidos', async (req, res) => {
       return num.toFixed(2);
     };
 
-    // Paso 1: Insertar el pedido principal usando SQL directo
-    const queryPedido = `
+    // Paso 1: Insertar el pedido principal usando SQL directo con tagged template
+    const resultadoPedido = await sql`
       INSERT INTO pedidos (
         nombre, email, telefono, direccion, apartamento, 
         ciudad, estado, codigo_postal, metodo_pago, metodo_envio,
         subtotal, costo_envio, impuesto, total
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      ) VALUES (
+        ${datosCliente.nombre},
+        ${datosCliente.email},
+        ${datosCliente.telefono || null},
+        ${datosCliente.direccion},
+        ${datosCliente.apartamento || null},
+        ${datosCliente.ciudad},
+        ${datosCliente.estado},
+        ${datosCliente.codigoPostal},
+        ${metodoPago},
+        ${metodoEnvio},
+        ${formatearDecimal(subtotal)},
+        ${formatearDecimal(costoEnvio)},
+        ${formatearDecimal(impuesto)},
+        ${formatearDecimal(total)}
+      )
       RETURNING id
     `;
-    
-    const resultadoPedido = await sql(queryPedido, [
-      datosCliente.nombre,
-      datosCliente.email,
-      datosCliente.telefono || null,
-      datosCliente.direccion,
-      datosCliente.apartamento || null,
-      datosCliente.ciudad,
-      datosCliente.estado,
-      datosCliente.codigoPostal,
-      metodoPago,
-      metodoEnvio,
-      formatearDecimal(subtotal),
-      formatearDecimal(costoEnvio),
-      formatearDecimal(impuesto),
-      formatearDecimal(total)
-    ]);
     
     const pedidoId = resultadoPedido[0].id;
     console.log('Pedido creado con ID:', pedidoId);
 
     // Paso 2: Insertar los items del carrito
-    const queryItem = `
-      INSERT INTO pedido_items (pedido_id, nombre_producto, precio, cantidad)
-      VALUES ($1, $2, $3, $4)
-    `;
-    
     for (const item of carrito) {
-      await sql(queryItem, [
-        pedidoId,
-        item.name || item.title || 'Producto sin nombre',
-        formatearDecimal(item.price || 0),
-        parseInt(item.cantidad || item.quantity || 1)
-      ]);
+      await sql`
+        INSERT INTO pedido_items (pedido_id, nombre_producto, precio, cantidad)
+        VALUES (
+          ${pedidoId},
+          ${item.name || item.title || 'Producto sin nombre'},
+          ${formatearDecimal(item.price || 0)},
+          ${parseInt(item.cantidad || item.quantity || 1)}
+        )
+      `;
     }
 
     console.log(`${carrito.length} items insertados para pedido ${pedidoId}`);
@@ -116,10 +112,10 @@ app.post('/api/pedidos', async (req, res) => {
 app.get('/api/pedidos/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const pedidoId = parseInt(id);
     
     // Buscar el pedido
-    const pedidoQuery = 'SELECT * FROM pedidos WHERE id = $1';
-    const pedido = await sql(pedidoQuery, [parseInt(id)]);
+    const pedido = await sql`SELECT * FROM pedidos WHERE id = ${pedidoId}`;
     
     if (!pedido || pedido.length === 0) {
       return res.status(404).json({ 
@@ -129,8 +125,7 @@ app.get('/api/pedidos/:id', async (req, res) => {
     }
     
     // Buscar los items del pedido
-    const itemsQuery = 'SELECT * FROM pedido_items WHERE pedido_id = $1';
-    const items = await sql(itemsQuery, [parseInt(id)]);
+    const items = await sql`SELECT * FROM pedido_items WHERE pedido_id = ${pedidoId}`;
     
     res.json({ 
       status: true, 
@@ -152,7 +147,7 @@ app.get('/api/pedidos/:id', async (req, res) => {
 // Endpoint opcional para listar todos los pedidos
 app.get('/api/pedidos', async (req, res) => {
   try {
-    const query = `
+    const pedidos = await sql`
       SELECT 
         p.*,
         json_agg(
@@ -168,8 +163,6 @@ app.get('/api/pedidos', async (req, res) => {
       GROUP BY p.id
       ORDER BY p.created_at DESC
     `;
-    
-    const pedidos = await sql(query);
 
     res.json({ 
       status: true, 
