@@ -1,12 +1,14 @@
 import express from 'express';
 import serverless from 'serverless-http';
-import { neon } from '@neondatabase/serverless';
+import { db } from '../../src/db/index.js';
+import { pedidos, pedidoItems } from '../../src/db/schema.js';
+import { eq, desc } from 'drizzle-orm';
 
 const app = express();
 app.use(express.json());
 
-// Crear cliente SQL directo
-const sql = neon(process.env.NETLIFY_DATABASE_URL);
+const app = express();
+app.use(express.json());
 
 // Endpoint temporal para setup de base de datos
 app.post('/api/setup-db', async (req, res) => {
@@ -14,7 +16,7 @@ app.post('/api/setup-db', async (req, res) => {
     console.log('Iniciando setup de base de datos...');
     
     // Crear tabla pedidos
-    await sql`
+    await db.execute(`
       CREATE TABLE IF NOT EXISTS pedidos (
         id SERIAL PRIMARY KEY,
         nombre TEXT NOT NULL,
@@ -33,10 +35,10 @@ app.post('/api/setup-db', async (req, res) => {
         total NUMERIC(10, 2) NOT NULL,
         created_at TIMESTAMP DEFAULT NOW()
       )
-    `;
+    `);
     
     // Crear tabla pedido_items
-    await sql`
+    await db.execute(`
       CREATE TABLE IF NOT EXISTS pedido_items (
         id SERIAL PRIMARY KEY,
         pedido_id INTEGER NOT NULL REFERENCES pedidos(id),
@@ -44,19 +46,19 @@ app.post('/api/setup-db', async (req, res) => {
         precio NUMERIC(10, 2) NOT NULL,
         cantidad INTEGER DEFAULT 1 NOT NULL
       )
-    `;
+    `);
     
     // Verificar tablas creadas
-    const tablas = await sql`
+    const tablas = await db.execute(`
       SELECT table_name 
       FROM information_schema.tables 
       WHERE table_schema = 'public'
-    `;
+    `);
     
     res.json({
       status: true,
       mensaje: 'Tablas creadas exitosamente',
-      tablas: tablas.map(t => t.table_name)
+      tablas: tablas.rows.map(t => t.table_name)
     });
     
   } catch (error) {
@@ -107,46 +109,36 @@ app.post('/api/pedidos', async (req, res) => {
       return num.toFixed(2);
     };
 
-    // Paso 1: Insertar el pedido principal usando SQL directo con tagged template
-    const resultadoPedido = await sql`
-      INSERT INTO pedidos (
-        nombre, email, telefono, direccion, apartamento, 
-        ciudad, estado, codigo_postal, metodo_pago, metodo_envio,
-        subtotal, costo_envio, impuesto, total
-      ) VALUES (
-        ${datosCliente.nombre},
-        ${datosCliente.email},
-        ${datosCliente.telefono || null},
-        ${datosCliente.direccion},
-        ${datosCliente.apartamento || null},
-        ${datosCliente.ciudad},
-        ${datosCliente.estado},
-        ${datosCliente.codigoPostal},
-        ${metodoPago},
-        ${metodoEnvio},
-        ${formatearDecimal(subtotal)},
-        ${formatearDecimal(costoEnvio)},
-        ${formatearDecimal(impuesto)},
-        ${formatearDecimal(total)}
-      )
-      RETURNING id
-    `;
+    // Paso 1: Insertar el pedido principal usando Drizzle ORM
+    const [nuevoPedido] = await db.insert(pedidos).values({
+      nombre: datosCliente.nombre,
+      email: datosCliente.email,
+      telefono: datosCliente.telefono || null,
+      direccion: datosCliente.direccion,
+      apartamento: datosCliente.apartamento || null,
+      ciudad: datosCliente.ciudad,
+      estado: datosCliente.estado,
+      codigoPostal: datosCliente.codigoPostal,
+      metodoPago: metodoPago,
+      metodoEnvio: metodoEnvio,
+      subtotal: formatearDecimal(subtotal),
+      costoEnvio: formatearDecimal(costoEnvio),
+      impuesto: formatearDecimal(impuesto),
+      total: formatearDecimal(total),
+    }).returning({ id: pedidos.id });
     
-    const pedidoId = resultadoPedido[0].id;
+    const pedidoId = nuevoPedido.id;
     console.log('Pedido creado con ID:', pedidoId);
 
     // Paso 2: Insertar los items del carrito
-    for (const item of carrito) {
-      await sql`
-        INSERT INTO pedido_items (pedido_id, nombre_producto, precio, cantidad)
-        VALUES (
-          ${pedidoId},
-          ${item.name || item.title || 'Producto sin nombre'},
-          ${formatearDecimal(item.price || 0)},
-          ${parseInt(item.cantidad || item.quantity || 1)}
-        )
-      `;
-    }
+    const itemsParaInsertar = carrito.map(item => ({
+      pedidoId: pedidoId,
+      nombreProducto: item.name || item.title || 'Producto sin nombre',
+      precio: formatearDecimal(item.price || 0),
+      cantidad: parseInt(item.cantidad || item.quantity || 1),
+    }));
+
+    await db.insert(pedidoItems).values(itemsParaInsertar);
 
     console.log(`${carrito.length} items insertados para pedido ${pedidoId}`);
 
@@ -181,16 +173,17 @@ app.get('/api/pedidos', async (req, res) => {
             'precio', pi.precio,
             'cantidad', pi.cantidad
           )
-        ) as items
-      FROM pedidos p
-      LEFT JOIN pedido_items pi ON p.id = pi.pedido_id
-      GROUP BY p.id
-      ORDER BY p.created_at DESC
-    `;
+    // Obtener todos los pedidos con sus items usando Drizzle ORM
+    const todosPedidos = await db.query.pedidos.findMany({
+      with: {
+        items: true,
+      },
+      orderBy: [desc(pedidos.createdAt)],
+    });
 
     res.json({ 
       status: true, 
-      pedidos: pedidos 
+      pedidos: todosPedidos 
     });
 
   } catch (error) {
@@ -208,35 +201,24 @@ app.get('/api/pedidos/:id', async (req, res) => {
     const { id } = req.params;
     const pedidoId = parseInt(id);
     
-    // Buscar el pedido
-    const pedido = await sql`SELECT * FROM pedidos WHERE id = ${pedidoId}`;
+    // Buscar el pedido con sus items usando Drizzle ORM
+    const pedido = await db.query.pedidos.findFirst({
+      where: eq(pedidos.id, pedidoId),
+      with: {
+        items: true,
+      },
+    });
     
-    if (!pedido || pedido.length === 0) {
+    if (!pedido) {
       return res.status(404).json({ 
         status: false, 
         error: 'Pedido no encontrado' 
       });
     }
     
-    // Buscar los items del pedido
-    const items = await sql`SELECT * FROM pedido_items WHERE pedido_id = ${pedidoId}`;
-    
     res.json({ 
       status: true, 
-      pedido: {
-        ...pedido[0],
-        items: items
-      }
-    });
-
-  } catch (error) {
-    console.error('Error al obtener pedido:', error);
-    res.status(500).json({ 
-      status: false, 
-      error: error.message 
-    });
-  }
-});
+      pedido: pedido
 
 // Manejar rutas no encontradas
 app.use((req, res) => {
