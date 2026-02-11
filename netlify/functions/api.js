@@ -45,8 +45,8 @@ app.post('/api/pedidos', async (req, res) => {
       return num.toFixed(2);
     };
 
-    // Paso 1: Insertar el pedido principal
-    const [nuevoPedido] = await db.insert(pedidos).values({
+    // Paso 1: Insertar el pedido principal y obtener solo el ID
+    const resultado = await db.insert(pedidos).values({
       nombre: datosCliente.nombre,
       email: datosCliente.email,
       telefono: datosCliente.telefono || null,
@@ -61,11 +61,14 @@ app.post('/api/pedidos', async (req, res) => {
       costoEnvio: formatearDecimal(costoEnvio),
       impuesto: formatearDecimal(impuesto),
       total: formatearDecimal(total),
-    }).returning();
+    }).returning({ id: pedidos.id });
+    
+    const pedidoId = resultado[0].id;
+    console.log('Pedido creado con ID:', pedidoId);
 
     // Paso 2: Insertar los items del carrito
     const itemsParaInsertar = carrito.map(item => ({
-      pedidoId: nuevoPedido.id,
+      pedidoId: pedidoId,
       nombreProducto: item.name || item.title || 'Producto sin nombre',
       precio: formatearDecimal(item.price || 0),
       cantidad: parseInt(item.cantidad || item.quantity || 1),
@@ -76,7 +79,7 @@ app.post('/api/pedidos', async (req, res) => {
     // Respuesta exitosa
     res.status(201).json({ 
       status: true, 
-      pedidoId: nuevoPedido.id,
+      pedidoId: pedidoId,
       mensaje: 'Pedido creado exitosamente'
     });
 

@@ -9,9 +9,7 @@ if (!connectionString) {
   throw new Error('NETLIFY_DATABASE_URL no está configurada');
 }
 
-const sql = neon(connectionString, {
-  fullResults: true,
-});
+const sql = neon(connectionString);
 
 // Exportar instancia de Drizzle con el schema
 export const db = drizzle(sql, { schema });
